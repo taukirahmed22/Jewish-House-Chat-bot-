@@ -1,0 +1,9 @@
+# never commit secrets or live data
+*.sqlite
+*.sqlite-*
+.env
+*.key
+secrets*.json
+credentials*.json
+node_modules/
+data/

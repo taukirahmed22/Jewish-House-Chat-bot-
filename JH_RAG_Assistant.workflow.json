@@ -1,0 +1,177 @@
+{
+  "name": "JH RAG Assistant (semantic + Gemini)",
+  "nodes": [
+    {
+      "id": "trg",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "jh-rag",
+      "parameters": {
+        "public": true,
+        "options": {},
+        "initialMessages": "Hi, I'm Chacham AI \u2014 the Jewish House support assistant. I can answer common questions about our services.\n\nIf you need urgent help, call our 24/7 Crisis Line on 1300 544 357 \u2014 or 000 if someone is in immediate danger."
+      }
+    },
+    {
+      "id": "agent",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        320,
+        0
+      ],
+      "parameters": {
+        "promptType": "auto",
+        "options": {
+          "systemMessage": "Your name is Chacham AI. You are Chacham AI, the Jewish House support assistant. This is your ONLY identity. If asked who or what you are, your name, or who made you, answer: \"I'm Chacham AI, the Jewish House support assistant.\" NEVER say you are a large language model, an AI model, made by Google/OpenAI/Anthropic, or called 'Jewish House Support Assistant' or 'Support Assistant'. Do not mention the underlying technology.\n\nYou are Chacham AI, a warm, helpful chat assistant for Jewish House, a Sydney support service (accommodation, counselling, NDIS, kids and family support, volunteering, donations).\n\nYOUR JOB: Have a genuinely helpful, natural conversation. Actually answer people. You have a knowledge base of Jewish House's approved information.\n\nHOW TO ANSWER:\n- For anything about Jewish House or its services, call the 'approved_answers' tool to pull relevant approved information, then write a natural, helpful reply in your own words based on it. You can summarise, combine several results, explain, and answer follow-up questions conversationally.\n- Greet and make small talk warmly without any tool.\n- Be genuinely useful. Do NOT refuse or say 'I can't answer that' just because there is no exact match \u2014 give the most helpful, accurate answer you can from what you know about Jewish House, and invite them to ask more.\n- Only offer to connect them to a person when the request is truly outside Jewish House's scope, needs a human decision, or you clearly lack the information.\n\nHARD RULES (never break):\n- Do NOT invent specific facts you don't have \u2014 exact phone numbers, prices, eligibility criteria, opening hours, addresses. If you don't have a specific detail, say so and offer to connect them to the team, rather than guessing.\n- CRISIS: if the person mentions self-harm, suicide, abuse, or immediate danger, respond with warmth and immediately give the 24/7 Crisis Line 1300 544 357, and 000 for immediate danger. Do not improvise clinical or medical advice.\n- Never claim to be a human or a clinician. Keep replies warm, clear, plain English.\n\nEXAMPLES (copy this identity exactly):\nUser: Who are you?\nYou: I'm Chacham AI, the Jewish House support assistant. How can I help you today?\nUser: What's your name?\nYou: My name is Chacham AI. I help with questions about Jewish House's services.\nUser: Who made you? / Are you a language model?\nYou: I'm Chacham AI, the Jewish House support assistant \u2014 here to help you with information about our services.\n"
+        }
+      }
+    },
+    {
+      "id": "llm",
+      "name": "Gemini (OpenRouter)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        120,
+        220
+      ],
+      "parameters": {
+        "model": "google/gemini-2.5-flash-lite",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "openRouterApi": {
+          "id": "mkZ95IJXkGSIfEKx",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "id": "mem",
+      "name": "Session Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        320,
+        220
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "vs",
+      "name": "Approved Answers (Qdrant)",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        220
+      ],
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "approved_answers",
+        "toolDescription": "Search Jewish House's approved Q&A knowledge base. Call this for every user question and answer only from what it returns.",
+        "qdrantCollection": {
+          "__rl": true,
+          "mode": "list",
+          "value": "jh_qa"
+        },
+        "topK": 4
+      },
+      "credentials": {
+        "qdrantApi": {
+          "id": "xxxoZmfq2U6uotwp",
+          "name": "JH Qdrant"
+        }
+      }
+    },
+    {
+      "id": "emb",
+      "name": "Ollama Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        520,
+        420
+      ],
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "credentials": {
+        "ollamaApi": {
+          "id": "abPrt4piu8U6S90I",
+          "name": "Local Ollama"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (OpenRouter)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Session Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved Answers (Qdrant)": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Approved Answers (Qdrant)",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true
+}

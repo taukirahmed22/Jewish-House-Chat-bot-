@@ -1,0 +1,3 @@
+NAMES                          IMAGE                               STATUS        PORTS
+n8n-n8n-1                      docker.n8n.io/n8nio/n8n:latest      Up 4 days     127.0.0.1:5678->5678/tcp
+jh-qdrant                      qdrant/qdrant:latest                Up 4 days     127.0.0.1:6333->6333/tcp, 6334/tcp

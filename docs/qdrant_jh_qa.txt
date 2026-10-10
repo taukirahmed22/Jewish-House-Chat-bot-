@@ -1,0 +1,1 @@
+jh_qa points: 37 vectors cfg: {'size': 768, 'distance': 'Cosine'}
